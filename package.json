@@ -6,6 +6,7 @@
     "start": "nest start",
     "dev": "nest start --watch",
     "build": "nest build",
+    "start:prod": "node dist/main",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init"
   },
