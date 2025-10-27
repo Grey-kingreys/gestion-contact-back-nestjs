@@ -6,9 +6,9 @@ dotenv.config();
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173'
+    origin: process.env.CORS_ORIGIN || 'https://front-carnet-nest.vercel.app/'
   });
   await app.listen(process.env.PORT || 10000);
-  console.log('Server listening on', process.env.PORT || 3000);
+  console.log('Server listening on', process.env.PORT || 10000);
 }
 bootstrap();
