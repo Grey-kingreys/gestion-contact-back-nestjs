@@ -1,69 +1,87 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
-import * as dotenv from 'dotenv';
-dotenv.config();
+
+interface EmailOptions {
+  recipient: string;
+  subject: string;
+  html: string;
+}
+
+interface UserEmailParams {
+  recipient: string;
+  name: string;
+}
+
+interface ResetPasswordParams extends UserEmailParams {
+  token: string;
+}
 
 @Injectable()
 export class MailerService {
   private readonly logger = new Logger(MailerService.name);
   private readonly mailer: Resend;
   private readonly fromEmail: string;
+  private readonly corsOrigin: string;
 
   constructor(private configService: ConfigService) {
     const apiKey = this.configService.get<string>('RESEND_API_KEY');
+    this.corsOrigin = this.configService.get<string>('CORS_ORIGIN');
     
     if (!apiKey) {
       throw new Error('RESEND_API_KEY is not defined');
+    }
+
+    if (!this.corsOrigin) {
+      throw new Error('CORS_ORIGIN is not defined');
     }
 
     this.mailer = new Resend(apiKey);
     this.fromEmail = 'Acme <onboarding@resend.dev>';
   }
 
-  async sendCreatedAccountEmail({ recipient, name }: { recipient: string; name: string }) {
+  async sendCreatedAccountEmail(params: UserEmailParams): Promise<any> {
     const subject = 'Bienvenue sur Notre plateforme de gestion de contact';
-    const html = this.getWelcomeTemplate(name);
+    const html = this.getWelcomeTemplate(params.name);
 
-    return this.sendEmail({ recipient, subject, html });
+    return this.sendEmail({ 
+      recipient: params.recipient, 
+      subject, 
+      html 
+    });
   }
 
-  async sendResetPasswordEmail({ recipient, name, token }: { 
-    recipient: string; 
-    name: string; 
-    token: string; 
-  }) {
-    
-    const link = `${process.env.CORS_ORIGIN}/reset-password/${token}`;
+  async sendResetPasswordEmail(params: ResetPasswordParams): Promise<any> {
+    const link = `${this.corsOrigin}/reset-password/${params.token}`;
     const subject = 'Notre plateforme de gestion de contact - Réinitialisation de mot de passe';
-    const html = this.getResetPasswordTemplate(name, link);
+    const html = this.getResetPasswordTemplate(params.name, link);
 
-    return this.sendEmail({ recipient, subject, html });
+    return this.sendEmail({ 
+      recipient: params.recipient, 
+      subject, 
+      html 
+    });
   }
 
-  private async sendEmail({ recipient, subject, html }: { 
-    recipient: string; 
-    subject: string; 
-    html: string; 
-  }) {
+  private async sendEmail(options: EmailOptions): Promise<any> {
     try {
       const { data, error } = await this.mailer.emails.send({
         from: this.fromEmail,
-        to: [recipient],
-        subject,
-        html,
+        to: [options.recipient],
+        subject: options.subject,
+        html: options.html,
       });
 
       if (error) {
-        this.logger.error(`Failed to send email to ${recipient}: ${error.message}`);
+        this.logger.error(`Failed to send email to ${options.recipient}: ${error.message}`);
         throw new Error(`Failed to send email: ${error.message}`);
       }
 
-      this.logger.log(`Email sent successfully to ${recipient}`);
+      this.logger.log(`Email sent successfully to ${options.recipient}`);
       return data;
 
     } catch (error) {
-      this.logger.error(`Email sending failed to ${recipient}:`, error);
+      this.logger.error(`Email sending failed to ${options.recipient}:`, error);
       throw error;
     }
   }
@@ -82,6 +100,6 @@ export class MailerService {
       <a href="${link}">Réinitialiser mon mot de passe</a>
       <br><br>
       Ce lien expirera dans 1 minute.
-    `;
+    `; 
   }
 }

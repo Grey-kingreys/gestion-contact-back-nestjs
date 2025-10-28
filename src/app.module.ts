@@ -5,8 +5,11 @@ import { UsersModule } from './users/users.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { AuthModule } from './auth/auth.module';
 import { PrismaService } from './prisma/prisma.service';
-import { MailerService } from './mailer.service';
+import { MailerService } from './common/services/mailer.service';
 import { AppGateway } from './app.gateway';
+import { RecaptchaService } from './common/services/recaptcha.service';
+import { RecaptchaGuard } from './common/guards/recaptcha.guard';
+import { RecaptchaInterceptor } from './common/interceptors/recaptcha.interceptor';
 
 
 @Module({
@@ -16,6 +19,12 @@ import { AppGateway } from './app.gateway';
     ContactsModule, 
     AuthModule, 
   ],
-  providers: [PrismaService, MailerService, AppGateway],
+  providers: [
+    PrismaService, 
+    MailerService, 
+    AppGateway, 
+    RecaptchaService, 
+    RecaptchaGuard, 
+    RecaptchaInterceptor],
 })
 export class AppModule {}

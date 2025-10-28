@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { MailerService } from '../mailer.service';
+import { MailerService } from '../common/services/mailer.service';
 
 @Injectable()
 export class UsersService {
