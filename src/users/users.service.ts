@@ -71,7 +71,7 @@ export class UsersService {
           sub: user.id,
           email: user.email,
         }),
-        resetPasswordTokenExpiry: new Date(Date.now() + 60 * 1000),
+        resetPasswordTokenExpiry: new Date(Date.now() + 60 * 60 * 1000),
       }
     })
 
