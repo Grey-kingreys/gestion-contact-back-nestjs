@@ -6,7 +6,6 @@ import { UsersController } from './users.controller';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthModule } from '../auth/auth.module';
 import { MailerService } from '../common/services/mailer.service';
-import { RecaptchaService } from '../common/services/recaptcha.service';
 
 @Module({
   imports: [
@@ -14,7 +13,7 @@ import { RecaptchaService } from '../common/services/recaptcha.service';
     ConfigModule.forRoot(), // Ajouter cette ligne
   ],
   controllers: [UsersController],
-  providers: [UsersService, PrismaService, MailerService, RecaptchaService],
+  providers: [UsersService, PrismaService, MailerService],
   exports: [UsersService],
 })
 export class UsersModule {}

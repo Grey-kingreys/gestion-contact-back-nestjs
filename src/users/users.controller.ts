@@ -4,33 +4,27 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RecaptchaGuard } from '../common/guards/recaptcha.guard';
-import { RecaptchaInterceptor } from '../common/interceptors/recaptcha.interceptor';
 
 
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
-  @UseGuards(RecaptchaGuard)
   @Post('create')
   create(@Body() dto: CreateUserDto) {
     return this.usersService.create(dto);
   }
 
-  @UseGuards(RecaptchaGuard)
   @Post('login')
   login(@Body() dto: LoginUserDto) {
     return this.usersService.login(dto.email, dto.password);
   }
 
-  @UseGuards(RecaptchaGuard)
-  @Post('resetpassword')
+   @Post('resetpassword')
   resetPasswordRequest(@Body('email') email: string) {
     return this.usersService.resetUserPasswordRequest({email});
   }
 
-  @UseGuards(RecaptchaGuard)
   @Post('resetpassword/:token')
   resetPassword(@Param('token') token: string, @Body('password') password: string) {
     return this.usersService.ResetPassword({token, password});
