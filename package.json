@@ -6,6 +6,9 @@
     "start": "nest start",
     "dev": "nest start --watch",
     "build": "nest build",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint \"{src,test}/**/*.ts\"",
     "start:prod": "node dist/main",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init"
