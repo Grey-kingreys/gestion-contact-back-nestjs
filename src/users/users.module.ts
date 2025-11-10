@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config'; // Ajouter cette importation
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../common/services/prisma.service';
 import { AuthModule } from '../auth/auth.module';
 import { MailerService } from '../common/services/mailer.service';
 

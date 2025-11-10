@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../common/services/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { MailerService } from '../common/services/mailer.service';
@@ -23,10 +23,13 @@ export class UsersService {
         userId: user.id,
       },
     });
-    await this.mailerService.sendCreatedAccountEmail({
+    try{await this.mailerService.sendCreatedAccountEmail({
       recipient: user.email,
       name: user.name,
-    });
+    })}catch(err){
+      console.log("nous n'avons pas puis envoyer l'email")
+      
+    };
     return { user, token };
   }
 
@@ -132,8 +135,14 @@ export class UsersService {
 
   async findOne(id: number) {
     const user = await this.prisma.user.findUnique({ where: { id } });
+
     if (!user) throw new NotFoundException('User not found');
     return user;
+  }
+
+  async findIdByEmail(email: string): Promise<number | null> {
+    const user = await this.prisma.user.findUnique({ where: { email }, select: { id: true } });
+    return user?.id ?? null;
   }
 
   async update(id: number, data: any) {

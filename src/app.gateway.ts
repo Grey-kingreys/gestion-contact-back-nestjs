@@ -1,12 +1,20 @@
-import { MessageBody, SubscribeMessage, WebSocketGateway, ConnectedSocket } from "@nestjs/websockets";
-import { Socket } from "socket.io";
+import { MessageBody, SubscribeMessage, WebSocketGateway, ConnectedSocket, WebSocketServer } from "@nestjs/websockets";
+import { Server, Socket } from "socket.io";
 
-
-@WebSocketGateway(8001, { cors: true })
+@WebSocketGateway(8002, {
+  cors: {
+    origin: true,
+    credentials: true,
+  },
+})
 export class AppGateway {
-    @SubscribeMessage("message")
-    sendMessage(@MessageBody() data, @ConnectedSocket() socket: Socket){
-        console.log(data)
-        socket.emit('chat', "Salut j'ai bien reçu ton message")
+    @WebSocketServer()
+    public server: Server;
+
+    @SubscribeMessage("join")
+    handleJoin(@MessageBody() data: { conversationId: number | string }, @ConnectedSocket() socket: Socket){
+        const room = String(data?.conversationId ?? "");
+        if (!room) return;
+        socket.join(room);
     }
 }

@@ -1,0 +1,61 @@
+name: NestJS CI/CD
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  test-build:
+    name: Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+      
+      - name: Configurer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+      
+      - name: Installer les dépendances
+        run: npm install
+      
+      - name: Lancer les tests
+        run: npm test
+      
+      - name: Lancer le linting
+        run: npm run lint
+      
+      - name: Construire le projet
+        run: npm run build
+
+  deploy:
+    name: Deploy to Render
+    needs: test-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+      
+      - name: Configurer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      
+      - name: Installer les dépendances
+        run: npm install --production
+      
+      - name: Construire le projet
+        run: npm run build
+      
+      - name: Deploy to Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+        run: |
+          # Installation de l'API Render
+          curl -fsSL https://render.com/downloads/install-render-cli.sh | bash
+          
+          # Déploiement sur Render
+          render deploy --api-key $RENDER_API_KEY $RENDER_SERVICE_ID

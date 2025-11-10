@@ -8,30 +8,36 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  name      String
-  email     String    @unique
-  password  String
-  tokens    Token[]
-  contacts  Contact[]  // Relation avec les contacts
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  isVerified Boolean @default(false)
-  resetPasswordToken String?   @unique
+  id                       Int       @id @default(autoincrement())
+  name                     String
+  email                    String    @unique
+  password                 String
+  tokens                   Token[]
+  contacts                 Contact[] // Relation avec les contacts
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+  isVerified               Boolean   @default(false)
+  resetPasswordToken       String?   @unique
   resetPasswordTokenExpiry DateTime?
+
+  conversations     Conversation[]
+  sentMessages      ChatMessage[]
+  conversationHides ConversationHide[]
+  messageHides      MessageHide[]
+
   @@map("users")
 }
 
 model Contact {
-  id        Int      @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   firstname String
   lastname  String
   email     String
   phone     String?
-  
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -47,3 +53,54 @@ model Token {
   @@map("tokens")
 }
 
+model Conversation {
+  id        Int                @id @default(autoincrement())
+  userId    Int
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  users     User[]
+  messages  ChatMessage[]
+  hides     ConversationHide[]
+
+  @@map("conversations")
+}
+
+model ChatMessage {
+  id            Int           @id @default(autoincrement())
+  content       String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  senderId      Int
+  sender        User          @relation(fields: [senderId], references: [id])
+  conversation  Conversation  @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  chatId        Int
+  deletedForAll Boolean       @default(false)
+  deletedAt     DateTime?
+  hides         MessageHide[]
+
+  @@index([chatId])
+  @@index([senderId])
+  @@map("chat_messages")
+}
+
+model ConversationHide {
+  userId         Int
+  conversationId Int
+  hiddenAt       DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id])
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, conversationId])
+  @@map("conversation_hides")
+}
+
+model MessageHide {
+  userId    Int
+  messageId Int
+  hiddenAt  DateTime    @default(now())
+  user      User        @relation(fields: [userId], references: [id])
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@id([userId, messageId])
+  @@map("message_hides")
+}

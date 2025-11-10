@@ -1,9 +1,10 @@
-import { Controller, Post, Body, UseGuards, Request, Get, Patch, Delete, Param } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Get, Patch, Delete, Param, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RequestWithUser } from '../auth/jwt.strategy';
 
 
 @Controller('users')
@@ -33,15 +34,15 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
-  logout(@Request() req) {
-    const token = req.headers.authorization?.split(' ')[1];
-    return this.usersService.logout(req.user.sub, token);
+  logout(@Request() req: RequestWithUser) {
+    const token = (req as any).headers.authorization?.split(' ')[1];
+    return this.usersService.logout(req.user.userId, token);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('logout/all')
-  logoutAll(@Request() req) {
-    return this.usersService.logoutAll(req.user.sub);
+  logoutAll(@Request() req: RequestWithUser) {
+    return this.usersService.logoutAll(req.user.userId);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -51,9 +52,19 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('exists')
+  async exists(@Query('email') email: string) {
+    if (!email) {
+      return { exists: false };
+    }
+    const userId = await this.usersService.findIdByEmail(email);
+    return { exists: !!userId, userId };
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('me')
-  me(@Request() req) {
-    return this.usersService.findOne(req.user.sub);
+  me(@Request() req: RequestWithUser) {
+    return this.usersService.findOne(req.user.userId);
   }
 
   @UseGuards(JwtAuthGuard)
