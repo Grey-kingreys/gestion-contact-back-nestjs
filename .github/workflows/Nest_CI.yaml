@@ -21,41 +21,44 @@ jobs:
       - name: Installer les dépendances
         run: npm install
       
-      - name: Lancer les tests si disponibles
-        run: |
-          if [ -f "jest.config.js" ] || [ -f "jest.config.ts" ]; then
-            npm test -- --passWithNoTests
-          else
-            echo "Aucune configuration Jest trouvée, skip des tests"
-          fi
+      - name: Lancer les tests
+        run: npm test -- --passWithNoTests
       
-      - name: Vérifier la construction
+      - name: Construire le projet
         run: npm run build
-      
-      - name: Linter (optionnel)
-        run: npm run lint || echo "Aucun script lint configuré"
 
   deploy:
-    name: Deploy to Render
+    name: Deploy to Render via API
     needs: test-build
     runs-on: ubuntu-latest
-    if: success()
     steps:
-      - name: Checkout du code
-        uses: actions/checkout@v4
-      
-      - name: Configurer Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      
-      - name: Installer les dépendances et builder
-        run: |
-          npm ci
-          npm run build
-      
-      - name: Déployer sur Render
+      - name: Déclencher le déploiement via l'API Render
         env:
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
         run: |
-          curl -X POST "$RENDER_DEPLOY_HOOK_URL"
+          curl -X POST \
+            "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" \
+            -H "Accept: application/json" \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "clearCache": false
+            }'
+      
+      - name: Vérifier le statut du déploiement
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+        run: |
+          # Attendre un peu que le déploiement commence
+          sleep 10
+          
+          # Récupérer le statut du dernier déploiement
+          response=$(curl -s \
+            "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys?limit=1" \
+            -H "Accept: application/json" \
+            -H "Authorization: Bearer $RENDER_API_KEY")
+          
+          echo "Statut du déploiement:"
+          echo $response | jq '.[0] | {id: .id, status: .status, createdAt: .createdAt}'
