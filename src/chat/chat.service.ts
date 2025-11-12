@@ -3,6 +3,7 @@ import { PrismaService } from '../common/services/prisma.service';
 import { createConversationDto } from './dto/create-conversation.dto';
 import { SendChatDto } from './dto/send-chat.dto';
 import { AppGateway } from '../app.gateway';
+import { error } from 'console';
 
 @Injectable()
 export class ChatService {
@@ -195,7 +196,10 @@ export class ChatService {
           message: newMessage,
         });
       } catch (e) {
-        // no-op if gateway/server is not ready
+        return {
+          error: e,
+          message: "Un probleme avec le serveur de message"
+        }
       }
 
       return {
@@ -329,38 +333,153 @@ export class ChatService {
   }
 
 }
-  async hideConversation({ userId, conversationId }: { userId: number; conversationId: number }) {
-    const conv = await this.prisma.conversation.findUnique({ where: { id: conversationId }, select: { id: true, users: { select: { id: true } } } });
-    if (!conv) return { error: true, message: "La conversation n'existe pas" };
+  
+async hideConversation({
+     userId, 
+     conversationId 
+    }: { 
+      userId: number; 
+      conversationId: number 
+    }) {
+
+    const conv = await this.prisma.conversation.findUnique({ 
+      where: { 
+        id: conversationId 
+      }, select: {
+        id: true, 
+        users: { 
+          select: { 
+            id: true 
+          } 
+        } 
+      } 
+    });
+
+    if (!conv) return { 
+      error: true,
+      message: "La conversation n'existe pas" 
+    };
+
     const isMember = conv.users.some(u => u.id === userId);
+
     if (!isMember) return { error: true, message: "Accès refusé" };
     await this.prisma.conversationHide.upsert({
-      where: { userId_conversationId: { userId, conversationId } },
-      create: { userId, conversationId },
+      where: { 
+        userId_conversationId: { 
+          userId, 
+          conversationId 
+        } 
+      },
+      create: { 
+        userId, 
+        conversationId 
+      },
       update: {},
     });
     return { error: false, message: 'Conversation masquée' };
   }
 
-  async hideMessage({ userId, conversationId, messageId }: { userId: number; conversationId: number; messageId: number }) {
-    const msg = await this.prisma.chatMessage.findFirst({ where: { id: messageId, chatId: conversationId }, select: { id: true } });
-    if (!msg) return { error: true, message: "Message introuvable" };
+  
+  
+  async hideMessage({ 
+    userId, 
+    conversationId, 
+    messageId 
+  }: { 
+    userId: number; 
+    conversationId: number; 
+    messageId: number 
+  }) {
+
+    const msg = await this.prisma.chatMessage.findFirst({ 
+      where: { 
+        id: messageId, 
+        chatId: conversationId 
+      }, 
+      select: { 
+        id: true 
+      } 
+    });
+
+    if (!msg) return { 
+      error: true, 
+      message: "Message introuvable" 
+    };
+
     await this.prisma.messageHide.upsert({
-      where: { userId_messageId: { userId, messageId } },
-      create: { userId, messageId },
+      where: { 
+        userId_messageId: { 
+          userId, 
+          messageId 
+        } 
+      },
+
+      create: { 
+        userId, 
+        messageId 
+      },
+
       update: {},
     });
     return { error: false, message: 'Message masqué' };
   }
 
-  async deleteMessageForAll({ userId, conversationId, messageId }: { userId: number; conversationId: number; messageId: number }) {
-    const msg = await this.prisma.chatMessage.findFirst({ where: { id: messageId, chatId: conversationId }, select: { id: true, senderId: true } });
-    if (!msg) return { error: true, message: "Message introuvable" };
-    if (msg.senderId !== userId) return { error: true, message: "Seul l'expéditeur peut supprimer pour tous" };
-    await this.prisma.chatMessage.update({ where: { id: messageId }, data: { deletedForAll: true, deletedAt: new Date() } });
+  
+  async deleteMessageForAll({ 
+    userId, 
+    conversationId, 
+    messageId 
+  }: { 
+    userId: number; 
+    conversationId: number; 
+    messageId: number 
+  }) {
+
+    const msg = await this.prisma.chatMessage.findFirst({ 
+      where: { id: messageId, 
+        chatId: conversationId 
+      }, 
+      select: { 
+        id: true, 
+        senderId: true 
+      } 
+    });
+
+    if (!msg) return { 
+      error: true, 
+      message: "Message introuvable" 
+    };
+
+    if (msg.senderId !== userId) return { 
+      error: true, 
+      message: "Seul l'expéditeur peut supprimer pour tous" 
+    };
+
+    await this.prisma.chatMessage.update({ 
+      where: { 
+        id: messageId 
+      }, 
+      data: { 
+        deletedForAll: true, 
+        deletedAt: new Date() 
+      } 
+    });
+
     try {
-      this.gateway.server?.to(String(conversationId)).emit('chat:messageDeleted', { conversationId, messageId, scope: 'all' });
-    } catch {}
-    return { error: false, message: 'Message supprimé pour tout le monde' };
+      this.gateway.server?.to(String(conversationId)).emit('chat:messageDeleted', 
+        { 
+          conversationId, 
+          messageId, 
+          scope: 'all' 
+        });
+
+    } catch {
+
+    }
+    return { 
+      error: false, 
+      message: 'Message supprimé pour tout le monde' 
+    };
+    
   }
 }
