@@ -26,7 +26,7 @@ export class MailerService {
 
   constructor(private configService: ConfigService) {
     const apiKey = this.configService.get<string>('RESEND_API_KEY');
-    this.corsOrigin = this.configService.get<string>('CORS_ORIGIN');
+    this.corsOrigin = this.configService.get<string>('CORS_ORIGIN_WEB');
     
     if (!apiKey) {
       throw new Error('RESEND_API_KEY is not defined');

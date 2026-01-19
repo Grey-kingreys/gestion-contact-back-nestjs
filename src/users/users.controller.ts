@@ -45,7 +45,7 @@ export class UsersController {
     return this.usersService.logoutAll(req.user.userId);
   }
 
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @Get('all')
   findAll() {
     return this.usersService.findAll();
