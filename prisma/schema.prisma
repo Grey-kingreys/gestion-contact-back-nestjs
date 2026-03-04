@@ -12,6 +12,7 @@ model User {
   name                     String
   email                    String    @unique
   password                 String
+  avatarUrl                String?
   tokens                   Token[]
   contacts                 Contact[] // Relation avec les contacts
   createdAt                DateTime  @default(now())
@@ -68,6 +69,8 @@ model Conversation {
 model ChatMessage {
   id            Int           @id @default(autoincrement())
   content       String
+  fileUrl       String?
+  fileType      String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   senderId      Int

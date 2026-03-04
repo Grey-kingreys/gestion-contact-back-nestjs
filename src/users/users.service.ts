@@ -3,10 +3,17 @@ import { PrismaService } from '../common/services/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { MailerService } from '../common/services/mailer.service';
+import { UploadService } from '../upload/upload.service';
+import { userInfo } from 'os';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService, private jwtService: JwtService, private mailerService: MailerService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService, 
+    private mailerService: MailerService,
+    private uploadService: UploadService,
+  ) {}
 
   async create(data: { name: string; email: string; password: string }) {
     const hashed = await bcrypt.hash(data.password, 10);
@@ -154,5 +161,17 @@ export class UsersService {
 
   async remove(id: number) {
     return this.prisma.user.delete({ where: { id } });
+  }
+
+  async updateAvatar(userId: number, avatarUrl: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    
+    //supprimer l'ancien avatar
+    if(user.avatarUrl) await this.uploadService.deleteFile(user.avatarUrl);
+
+    await this.prisma.user.update({
+      where: { id: userId},
+      data: {avatarUrl}
+    })
   }
 }

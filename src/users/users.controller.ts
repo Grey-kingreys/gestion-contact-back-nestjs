@@ -1,15 +1,34 @@
-import { Controller, Post, Body, UseGuards, Request, Get, Patch, Delete, Param, Query } from '@nestjs/common';
+import { 
+  Controller, 
+  Post, 
+  Body, 
+  UseGuards, 
+  Request, 
+  Get, 
+  Patch, 
+  Delete, 
+  Param, 
+  Query,
+  UseInterceptors,
+  UploadedFile
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RequestWithUser } from '../auth/jwt.strategy';
+import { UploadService } from '../upload/upload.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 
 
 @Controller('users')
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(
+    private usersService: UsersService,
+    private uploadService: UploadService
+  ) {}
 
   @Post('create')
   create(@Body() dto: CreateUserDto) {
@@ -83,5 +102,34 @@ export class UsersController {
   @Delete('delete/:id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(+id);
+  }
+
+
+  @UseGuards(JwtAuthGuard)
+  @Post('avatar')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(), 
+      limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB
+      },
+      fileFilter(req, file, callback) {
+        const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if(allowed.includes(file.mimetype)){
+          callback(null, true);
+        }
+        else {
+          callback(new Error('Seules les images sont autoriser'), false);
+        }
+      },
+    }),
+  )
+  async uploadAvatar(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: RequestWithUser
+  ){
+    const url = await this.uploadService.uploadFile(file, 'avatar');
+    await this.usersService.updateAvatar(req.user.userId, url);
+    return { avatarUrl: url}
   }
 }

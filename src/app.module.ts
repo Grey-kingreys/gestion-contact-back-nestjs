@@ -10,6 +10,7 @@ import { RecaptchaService } from './common/services/recaptcha.service';
 import { RecaptchaGuard } from './common/guards/recaptcha.guard';
 import { RecaptchaInterceptor } from './common/interceptors/recaptcha.interceptor';
 import { ChatModule } from './chat/chat.module';
+import { UploadModule } from './upload/upload.module';
 
 
 @Module({
@@ -17,7 +18,7 @@ import { ChatModule } from './chat/chat.module';
     ConfigModule.forRoot(), // Ajouter cette ligne
     UsersModule, 
     ContactsModule, 
-    AuthModule, ChatModule, 
+    AuthModule, ChatModule, UploadModule, 
   ],
   providers: [
     PrismaService, 
