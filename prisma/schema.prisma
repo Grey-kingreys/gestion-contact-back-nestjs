@@ -13,6 +13,7 @@ model User {
   email                    String    @unique
   password                 String
   avatarUrl                String?
+  stripeCustomerId String? @unique
   tokens                   Token[]
   contacts                 Contact[] // Relation avec les contacts
   createdAt                DateTime  @default(now())
@@ -25,6 +26,10 @@ model User {
   sentMessages      ChatMessage[]
   conversationHides ConversationHide[]
   messageHides      MessageHide[]
+
+  subscription         Subscription?
+  sentTransactions     Transaction[] @relation("SentTransactions")
+  receivedTransactions Transaction[] @relation("ReceivedTransactions")
 
   @@map("users")
 }
@@ -106,4 +111,35 @@ model MessageHide {
 
   @@id([userId, messageId])
   @@map("message_hides")
+}
+
+model Subscription {
+  id                   Int      @id @default(autoincrement())
+  userId               Int      @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeSubscriptionId String   @unique
+  stripePriceId        String
+  status               String   // active, canceled, past_due, trialing
+  currentPeriodEnd     DateTime
+  plan                 String   // "monthly" ou "yearly"
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@map("subscriptions")
+}
+
+model Transaction {
+  id               Int      @id @default(autoincrement())
+  senderId         Int
+  sender           User     @relation("SentTransactions", fields: [senderId], references: [id])
+  receiverId       Int
+  receiver         User     @relation("ReceivedTransactions", fields: [receiverId], references: [id])
+  amount           Float    // montant en euros
+  currency         String   @default("eur")
+  stripeTransferId String?  @unique
+  status           String   // pending, completed, failed
+  description      String?
+  createdAt        DateTime @default(now())
+
+  @@map("transactions")
 }

@@ -33,7 +33,7 @@ export class MailerService {
     }
 
     if (!this.corsOrigin) {
-      throw new Error('CORS_ORIGIN is not defined');
+      throw new Error('CORS_ORIGIN_WEB is not defined');
     }
 
     this.mailer = new Resend(apiKey);

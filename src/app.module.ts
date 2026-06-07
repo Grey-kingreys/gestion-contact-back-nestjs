@@ -11,6 +11,7 @@ import { RecaptchaGuard } from './common/guards/recaptcha.guard';
 import { RecaptchaInterceptor } from './common/interceptors/recaptcha.interceptor';
 import { ChatModule } from './chat/chat.module';
 import { UploadModule } from './upload/upload.module';
+// import { StripeModule } from './stripe/stripe.module';
 
 
 @Module({
